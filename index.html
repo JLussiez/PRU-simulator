@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur Actions/ETF</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'gain': '#10b981',
+                        'loss': '#ef4444'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen py-8">
+    <div class="container mx-auto px-4 max-w-4xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Calculateur Actions/ETF</h1>
+            <p class="text-gray-600">Calculez vos gains et simulations d'investissement</p>
+        </div>
+
+        <!-- Calculateur de PRU -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Calculateur de PRU</h2>
+            <p class="text-gray-600 mb-4">Calculez votre Prix de Revient Unitaire moyen en ajoutant vos différents achats</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label for="achatNombre" class="block text-sm font-medium text-gray-700 mb-2">Nombre d'actions</label>
+                    <input type="number" id="achatNombre" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Ex: 50" step="0.01">
+                </div>
+                
+                <div>
+                    <label for="achatPrix" class="block text-sm font-medium text-gray-700 mb-2">Prix d'achat €</label>
+                    <input type="number" id="achatPrix" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Ex: 150.50" step="0.01">
+                </div>
+                
+                <div class="flex items-end">
+                    <button onclick="ajouterAchat()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                        Ajouter l'achat
+                    </button>
+                </div>
+            </div>
+
+            <!-- Liste des achats -->
+            <div id="listeAchats" class="mb-4" style="display: none;">
+                <h3 class="text-lg font-medium text-gray-800 mb-2">Achats ajoutés</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-gray-50 rounded-lg">
+                        <thead>
+                            <tr class="text-left text-sm text-gray-600">
+                                <th class="px-4 py-2">Nombre d'actions</th>
+                                <th class="px-4 py-2">Prix d'achat</th>
+                                <th class="px-4 py-2">Montant total</th>
+                                <th class="px-4 py-2">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableauAchats">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Résultats PRU -->
+            <div id="resultatsPRU" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4" style="display: none;">
+                <div class="bg-purple-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-gray-600 mb-1">Total des actions</p>
+                    <p id="totalActions" class="text-xl font-bold text-purple-600">0</p>
+                </div>
+                
+                <div class="bg-purple-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-gray-600 mb-1">Investissement total</p>
+                    <p id="investissementTotalPRU" class="text-xl font-bold text-purple-600">0 €</p>
+                </div>
+                
+                <div class="bg-purple-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-gray-600 mb-1">PRU moyen</p>
+                    <p id="pruMoyen" class="text-xl font-bold text-purple-600">0 €</p>
+                </div>
+            </div>
+
+            <button onclick="reinitialiserPRU()" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-md transition-colors" id="btnReinitialiser" style="display: none;">
+                Réinitialiser
+            </button>
+        </div>
+
+        <!-- Formulaire principal -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Informations de l'actif</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label for="nomActif" class="block text-sm font-medium text-gray-700 mb-2">Nom de l'actif</label>
+                    <input type="text" id="nomActif" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: Apple, MSCI World ETF...">
+                </div>
+                
+                <div>
+                    <label for="nombreActions" class="block text-sm font-medium text-gray-700 mb-2">Nombre d'actions</label>
+                    <input type="number" id="nombreActions" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: 100" step="0.01">
+                </div>
+                
+                <div>
+                    <label for="pru" class="block text-sm font-medium text-gray-700 mb-2">PRU (Prix de Revient Unitaire) €</label>
+                    <input type="number" id="pru" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: 150.50" step="0.01">
+                </div>
+                
+                <div>
+                    <label for="prixActuel" class="block text-sm font-medium text-gray-700 mb-2">Prix actuel €</label>
+                    <input type="number" id="prixActuel" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: 175.20" step="0.01">
+                </div>
+            </div>
+
+            <button onclick="calculer()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                Calculer
+            </button>
+        </div>
+
+        <!-- Résultats -->
+        <div id="resultats" class="bg-white rounded-lg shadow-md p-6 mb-6" style="display: none;">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Résultats</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="text-sm text-gray-600">Investissement initial</p>
+                    <p id="investissementInitial" class="text-lg font-semibold text-gray-900">-</p>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="text-sm text-gray-600">Valeur actuelle</p>
+                    <p id="valeurActuelle" class="text-lg font-semibold text-gray-900">-</p>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="text-sm text-gray-600">Plus-value par action</p>
+                    <p id="plusValueParAction" class="text-lg font-semibold">-</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-gray-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-gray-600 mb-1">Gain/Perte total</p>
+                    <p id="gainTotal" class="text-2xl font-bold">-</p>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-gray-600 mb-1">Pourcentage</p>
+                    <p id="pourcentage" class="text-2xl font-bold">-</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Simulation -->
+        <div id="simulation" class="bg-white rounded-lg shadow-md p-6" style="display: none;">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Simulation</h2>
+            <p class="text-gray-600 mb-4">Modifiez les valeurs ci-dessous pour simuler différents scénarios</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label for="simNombreActions" class="block text-sm font-medium text-gray-700 mb-2">Nombre d'actions</label>
+                    <input type="number" id="simNombreActions" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" step="0.01">
+                </div>
+                
+                <div>
+                    <label for="simPru" class="block text-sm font-medium text-gray-700 mb-2">PRU €</label>
+                    <input type="number" id="simPru" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" step="0.01">
+                </div>
+                
+                <div>
+                    <label for="simPrixActuel" class="block text-sm font-medium text-gray-700 mb-2">Prix actuel €</label>
+                    <input type="number" id="simPrixActuel" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" step="0.01">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="bg-green-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-gray-600 mb-1">Gain/Perte simulé</p>
+                    <p id="gainSimule" class="text-2xl font-bold text-green-600">-</p>
+                </div>
+                
+                <div class="bg-green-50 p-4 rounded-lg text-center">
+                    <p class="text-sm text-gray-600 mb-1">Pourcentage simulé</p>
+                    <p id="pourcentageSimule" class="text-2xl font-bold text-green-600">-</p>
+                </div>
+            </div>
+
+            <button onclick="calculerSimulation()" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                Calculer la simulation
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
